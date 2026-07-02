@@ -36,9 +36,9 @@ app.post('/render', async (req, res) => {
   }
 });
 
-const server = app.listen(3001, '127.0.0.1', () => {
-  console.log('Render server on http://127.0.0.1:3001');
-});
+const server = app.listen(3001, '0.0.0.0', () => {
+    console.log('Render server on http://0.0.0.0:3001');
+  });
 server.on('error', (err) => {
   console.error('Server error:', err);
   process.exit(1);

@@ -1,4 +1,4 @@
-import {AbsoluteFill, interpolate, Sequence, staticFile, useCurrentFrame, Video} from 'remotion';
+import {AbsoluteFill, interpolate, OffthreadVideo, Sequence, staticFile, useCurrentFrame} from 'remotion';
 import {VideoProps} from '../types';
 import React from 'react';
 
@@ -16,10 +16,9 @@ export const CTA: React.FC<VideoProps> = ({gifCta, competition}) => {
     <Sequence from={START_FRAME} durationInFrames={76}>
       <AbsoluteFill>
         {gifCta ? (
-          <Video
+          <OffthreadVideo
             src={staticFile(gifCta)}
             style={{width: '100%', height: '100%', objectFit: 'cover'}}
-            loop
           />
         ) : null}
         <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />

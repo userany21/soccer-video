@@ -7,7 +7,7 @@ import {
   staticFile,
   useCurrentFrame,
   useVideoConfig,
-  Video,
+  OffthreadVideo,
 } from 'remotion';
 import {VideoProps} from '../types';
 import React from 'react';
@@ -47,10 +47,9 @@ export const Bet: React.FC<VideoProps> = (props) => {
     <Sequence from={START_FRAME} durationInFrames={66}>
       <AbsoluteFill>
         {gifBet ? (
-          <Video
+          <OffthreadVideo
             src={staticFile(gifBet)}
             style={{width: '100%', height: '100%', objectFit: 'cover'}}
-            loop
           />
         ) : null}
         <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />

@@ -33,6 +33,22 @@ async function downloadFile(url, dest) {
   });
 }
 
+// Relocates the moov atom to the front of the file ("faststart") so video
+// players can read duration/metadata without scanning the whole file.
+// Giphy's exported MP4s have moov at the end, which causes Chrome/Remotion
+// to hang trying to read duration. -c copy means no re-encoding happens.
+async function faststartRemux(inputPath) {
+  const tempPath = inputPath + '.faststart.mp4';
+  await execFileAsync('ffmpeg', [
+    '-i', inputPath,
+    '-c', 'copy',
+    '-movflags', 'faststart',
+    '-y',
+    tempPath,
+  ], { timeout: 30000 });
+  fs.renameSync(tempPath, inputPath);
+}
+
 app.post('/render', async (req, res) => {
   const jobStart = Date.now();
   const data = req.body;
@@ -58,6 +74,11 @@ app.post('/render', async (req, res) => {
         await downloadFile(data[key], localPath);
         const size = fs.existsSync(localPath) ? fs.statSync(localPath).size : 0;
         console.log(`[${id}] Downloaded ${key} in ${Date.now() - dlStart}ms, ${size} bytes`);
+
+        const remuxStart = Date.now();
+        await faststartRemux(localPath);
+        console.log(`[${id}] Remuxed ${key} (faststart) in ${Date.now() - remuxStart}ms`);
+
         data[key] = `tmp-gifs/${id}/${filename}`;
       }
     }

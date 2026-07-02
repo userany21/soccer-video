@@ -34,32 +34,40 @@ async function downloadFile(url, dest) {
 }
 
 app.post('/render', async (req, res) => {
+  const jobStart = Date.now();
   const data = req.body;
-  console.log('BODY RECEIVED:', JSON.stringify(data).slice(0, 300));
   const id = Date.now();
+  console.log(`[${id}] === NEW RENDER REQUEST ===`);
+  console.log(`[${id}] BODY RECEIVED:`, JSON.stringify(data).slice(0, 300));
+
   const propsPath = path.join(__dirname, `props-${id}.json`);
   const outPath = path.join(__dirname, `out/video-${id}.mp4`);
-  // Download into Remotion's public/ folder so staticFile() can read it
-  // directly during render, with no HTTP round-trip through this server.
   const gifDir = path.join(__dirname, 'public', 'tmp-gifs', `${id}`);
 
   fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
   fs.mkdirSync(gifDir, { recursive: true });
 
   try {
-    // Pre-download GIFs, store relative path for staticFile() to resolve
     const gifKeys = ['gifHook', 'gifMatch', 'gifBet', 'gifPayout', 'gifCta'];
     for (const key of gifKeys) {
       if (data[key]) {
         const filename = `${key}.mp4`;
         const localPath = path.join(gifDir, filename);
+        const dlStart = Date.now();
+        console.log(`[${id}] Downloading ${key} from ${data[key]}`);
         await downloadFile(data[key], localPath);
+        const size = fs.existsSync(localPath) ? fs.statSync(localPath).size : 0;
+        console.log(`[${id}] Downloaded ${key} in ${Date.now() - dlStart}ms, ${size} bytes`);
         data[key] = `tmp-gifs/${id}/${filename}`;
       }
     }
+    console.log(`[${id}] All GIFs downloaded. Total download time: ${Date.now() - jobStart}ms`);
 
     fs.writeFileSync(propsPath, JSON.stringify(data));
+    console.log(`[${id}] Props written to ${propsPath}`);
 
+    const renderStart = Date.now();
+    console.log(`[${id}] Starting Remotion render...`);
     await execFileAsync('npx', [
       'remotion', 'render',
       'src/index.ts',
@@ -69,13 +77,17 @@ app.post('/render', async (req, res) => {
       '--concurrency=1',
       '--timeout=30000',
     ], { cwd: __dirname, timeout: 600000 });
+    console.log(`[${id}] Render finished in ${Date.now() - renderStart}ms`);
 
     res.download(outPath, `video-${id}.mp4`, () => {
+      console.log(`[${id}] File sent to n8n, cleaning up. Total job time: ${Date.now() - jobStart}ms`);
       fs.unlinkSync(outPath);
       fs.unlinkSync(propsPath);
       fs.rmSync(gifDir, { recursive: true });
+      console.log(`[${id}] === DONE ===`);
     });
   } catch (err) {
+    console.error(`[${id}] FAILED after ${Date.now() - jobStart}ms:`, err.message);
     if (fs.existsSync(propsPath)) fs.unlinkSync(propsPath);
     if (fs.existsSync(gifDir)) fs.rmSync(gifDir, { recursive: true });
     res.status(500).json({ error: err.message });

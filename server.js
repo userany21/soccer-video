@@ -23,7 +23,8 @@ app.post('/render', async (req, res) => {
       outPath,
       `--props=${propsPath}`,
       '--concurrency=1',
-    ], { cwd: __dirname, timeout: 300000, stdio: 'pipe' });
+      '--timeout=120000',
+    ], { cwd: __dirname, timeout: 600000, stdio: 'pipe' });
 
     res.download(outPath, `video-${id}.mp4`, () => {
       fs.unlinkSync(outPath);

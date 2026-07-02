@@ -1,5 +1,5 @@
 const express = require('express');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -16,18 +16,29 @@ app.post('/render', async (req, res) => {
   fs.writeFileSync(propsPath, JSON.stringify(data));
 
   try {
-    execSync(
-      `npx remotion render SoccerVideo ${outPath} --props=${propsPath}`,
-      { cwd: __dirname, timeout: 300000 }
-    );
+    execFileSync('npx', [
+      'remotion', 'render',
+      'src/index.ts',
+      'SoccerVideo',
+      outPath,
+      `--props=${propsPath}`,
+      '--concurrency=1',
+    ], { cwd: __dirname, timeout: 300000, stdio: 'pipe' });
+
     res.download(outPath, `video-${id}.mp4`, () => {
       fs.unlinkSync(outPath);
       fs.unlinkSync(propsPath);
     });
   } catch (err) {
-    fs.unlinkSync(propsPath);
+    if (fs.existsSync(propsPath)) fs.unlinkSync(propsPath);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.listen(3001, () => console.log('Render server on :3001'));
+const server = app.listen(3001, '127.0.0.1', () => {
+  console.log('Render server on http://127.0.0.1:3001');
+});
+server.on('error', (err) => {
+  console.error('Server error:', err);
+  process.exit(1);
+});

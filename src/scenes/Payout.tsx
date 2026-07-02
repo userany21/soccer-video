@@ -2,6 +2,7 @@ import {
   AbsoluteFill,
   interpolate,
   Sequence,
+  staticFile,
   useCurrentFrame,
   Video,
 } from 'remotion';
@@ -33,7 +34,7 @@ export const Payout: React.FC<VideoProps> = (props) => {
       <AbsoluteFill>
         {gifPayout ? (
           <Video
-            src={gifPayout}
+            src={staticFile(gifPayout)}
             style={{width: '100%', height: '100%', objectFit: 'cover'}}
             loop
           />

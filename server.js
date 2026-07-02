@@ -10,9 +10,6 @@ const http = require('http');
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
-// Serve temp GIF files statically
-app.use('/tmp-gifs', express.static(path.join(__dirname, 'tmp-gifs')));
-
 async function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
@@ -42,20 +39,22 @@ app.post('/render', async (req, res) => {
   const id = Date.now();
   const propsPath = path.join(__dirname, `props-${id}.json`);
   const outPath = path.join(__dirname, `out/video-${id}.mp4`);
-  const gifDir = path.join(__dirname, 'tmp-gifs', `${id}`);
+  // Download into Remotion's public/ folder so staticFile() can read it
+  // directly during render, with no HTTP round-trip through this server.
+  const gifDir = path.join(__dirname, 'public', 'tmp-gifs', `${id}`);
 
   fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
   fs.mkdirSync(gifDir, { recursive: true });
 
   try {
-    // Pre-download GIFs and serve locally
+    // Pre-download GIFs, store relative path for staticFile() to resolve
     const gifKeys = ['gifHook', 'gifMatch', 'gifBet', 'gifPayout', 'gifCta'];
     for (const key of gifKeys) {
       if (data[key]) {
         const filename = `${key}.mp4`;
         const localPath = path.join(gifDir, filename);
         await downloadFile(data[key], localPath);
-        data[key] = `http://localhost:3001/tmp-gifs/${id}/${filename}`;
+        data[key] = `tmp-gifs/${id}/${filename}`;
       }
     }
 

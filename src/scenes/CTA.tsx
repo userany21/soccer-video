@@ -1,4 +1,4 @@
-import {AbsoluteFill, interpolate, Sequence, useCurrentFrame, Video} from 'remotion';
+import {AbsoluteFill, interpolate, Sequence, staticFile, useCurrentFrame, Video} from 'remotion';
 import {VideoProps} from '../types';
 import React from 'react';
 
@@ -17,7 +17,7 @@ export const CTA: React.FC<VideoProps> = ({gifCta, competition}) => {
       <AbsoluteFill>
         {gifCta ? (
           <Video
-            src={gifCta}
+            src={staticFile(gifCta)}
             style={{width: '100%', height: '100%', objectFit: 'cover'}}
             loop
           />

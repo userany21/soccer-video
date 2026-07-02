@@ -4,6 +4,7 @@ import {
   interpolate,
   Sequence,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
   Video,
@@ -47,7 +48,7 @@ export const Bet: React.FC<VideoProps> = (props) => {
       <AbsoluteFill>
         {gifBet ? (
           <Video
-            src={gifBet}
+            src={staticFile(gifBet)}
             style={{width: '100%', height: '100%', objectFit: 'cover'}}
             loop
           />

@@ -3,6 +3,7 @@ import {
   interpolate,
   Sequence,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
   Video,
@@ -38,7 +39,7 @@ export const Hook: React.FC<VideoProps> = ({
       <AbsoluteFill>
         {gifHook ? (
           <Video
-            src={gifHook}
+            src={staticFile(gifHook)}
             style={{width: '100%', height: '100%', objectFit: 'cover'}}
             loop
           />

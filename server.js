@@ -1,5 +1,7 @@
 const express = require('express');
-const { execFileSync } = require('child_process');
+const { execFile } = require('child_process');
+const util = require('util');
+const execFileAsync = util.promisify(execFile);
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
@@ -15,7 +17,7 @@ async function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
     const client = url.startsWith('https') ? https : http;
-    client.get(url, (res) => {
+    const req = client.get(url, { timeout: 10000 }, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         file.close();
         fs.unlinkSync(dest);
@@ -23,7 +25,11 @@ async function downloadFile(url, dest) {
       }
       res.pipe(file);
       file.on('finish', () => { file.close(); resolve(); });
-    }).on('error', (err) => {
+    });
+    req.on('timeout', () => {
+      req.destroy(new Error(`Download timed out: ${url}`));
+    });
+    req.on('error', (err) => {
       if (fs.existsSync(dest)) fs.unlinkSync(dest);
       reject(err);
     });
@@ -32,6 +38,7 @@ async function downloadFile(url, dest) {
 
 app.post('/render', async (req, res) => {
   const data = req.body;
+  console.log('BODY RECEIVED:', JSON.stringify(data).slice(0, 300));
   const id = Date.now();
   const propsPath = path.join(__dirname, `props-${id}.json`);
   const outPath = path.join(__dirname, `out/video-${id}.mp4`);
@@ -54,7 +61,7 @@ app.post('/render', async (req, res) => {
 
     fs.writeFileSync(propsPath, JSON.stringify(data));
 
-    execFileSync('npx', [
+    await execFileAsync('npx', [
       'remotion', 'render',
       'src/index.ts',
       'SoccerVideo',
@@ -62,7 +69,7 @@ app.post('/render', async (req, res) => {
       `--props=${propsPath}`,
       '--concurrency=1',
       '--timeout=30000',
-    ], { cwd: __dirname, timeout: 600000, stdio: 'pipe' });
+    ], { cwd: __dirname, timeout: 600000 });
 
     res.download(outPath, `video-${id}.mp4`, () => {
       fs.unlinkSync(outPath);

@@ -2,20 +2,49 @@ const express = require('express');
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
+
+async function downloadFile(url, dest) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, (res) => {
+      res.pipe(file);
+      file.on('finish', () => { file.close(); resolve(); });
+    }).on('error', (err) => {
+      fs.unlinkSync(dest);
+      reject(err);
+    });
+  });
+}
 
 app.post('/render', async (req, res) => {
   const data = req.body;
   const id = Date.now();
   const propsPath = path.join(__dirname, `props-${id}.json`);
   const outPath = path.join(__dirname, `out/video-${id}.mp4`);
+  const gifDir = path.join(__dirname, `tmp-${id}`);
 
   fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
-  fs.writeFileSync(propsPath, JSON.stringify(data));
+  fs.mkdirSync(gifDir, { recursive: true });
 
   try {
+    // Pre-download all GIFs locally
+    const gifKeys = ['gifHook', 'gifMatch', 'gifBet', 'gifPayout', 'gifCta'];
+    for (const key of gifKeys) {
+      if (data[key]) {
+        const localPath = path.join(gifDir, `${key}.mp4`);
+        await downloadFile(data[key], localPath);
+        data[key] = `file://${localPath}`;
+      }
+    }
+
+    fs.writeFileSync(propsPath, JSON.stringify(data));
+
     execFileSync('npx', [
       'remotion', 'render',
       'src/index.ts',
@@ -23,22 +52,24 @@ app.post('/render', async (req, res) => {
       outPath,
       `--props=${propsPath}`,
       '--concurrency=1',
-      '--timeout=120000',
+      '--timeout=30000',
     ], { cwd: __dirname, timeout: 600000, stdio: 'pipe' });
 
     res.download(outPath, `video-${id}.mp4`, () => {
       fs.unlinkSync(outPath);
       fs.unlinkSync(propsPath);
+      fs.rmSync(gifDir, { recursive: true });
     });
   } catch (err) {
     if (fs.existsSync(propsPath)) fs.unlinkSync(propsPath);
+    if (fs.existsSync(gifDir)) fs.rmSync(gifDir, { recursive: true });
     res.status(500).json({ error: err.message });
   }
 });
 
 const server = app.listen(3001, '0.0.0.0', () => {
-    console.log('Render server on http://0.0.0.0:3001');
-  });
+  console.log('Render server on http://0.0.0.0:3001');
+});
 server.on('error', (err) => {
   console.error('Server error:', err);
   process.exit(1);

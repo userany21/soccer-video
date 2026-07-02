@@ -36,11 +36,13 @@ export const Hook: React.FC<VideoProps> = ({
   return (
     <Sequence durationInFrames={56}>
       <AbsoluteFill>
-        <Video
-          src={gifHook}
-          style={{width: '100%', height: '100%', objectFit: 'cover'}}
-          loop
-        />
+        {gifHook ? (
+          <Video
+            src={gifHook}
+            style={{width: '100%', height: '100%', objectFit: 'cover'}}
+            loop
+          />
+        ) : null}
         <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />
 
         <AbsoluteFill style={{opacity: exitOpacity}}>

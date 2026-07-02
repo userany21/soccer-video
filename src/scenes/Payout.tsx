@@ -31,11 +31,13 @@ export const Payout: React.FC<VideoProps> = (props) => {
   return (
     <Sequence from={START_FRAME} durationInFrames={64}>
       <AbsoluteFill>
-        <Video
-          src={gifPayout}
-          style={{width: '100%', height: '100%', objectFit: 'cover'}}
-          loop
-        />
+        {gifPayout ? (
+          <Video
+            src={gifPayout}
+            style={{width: '100%', height: '100%', objectFit: 'cover'}}
+            loop
+          />
+        ) : null}
         <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />
 
         <AbsoluteFill style={{opacity}}>

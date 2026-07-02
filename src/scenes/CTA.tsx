@@ -15,11 +15,13 @@ export const CTA: React.FC<VideoProps> = ({gifCta, competition}) => {
   return (
     <Sequence from={START_FRAME} durationInFrames={76}>
       <AbsoluteFill>
-        <Video
-          src={gifCta}
-          style={{width: '100%', height: '100%', objectFit: 'cover'}}
-          loop
-        />
+        {gifCta ? (
+          <Video
+            src={gifCta}
+            style={{width: '100%', height: '100%', objectFit: 'cover'}}
+            loop
+          />
+        ) : null}
         <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />
 
         <AbsoluteFill style={{opacity}}>

@@ -44,11 +44,13 @@ export const Match: React.FC<VideoProps> = (props) => {
   return (
     <Sequence from={START_FRAME} durationInFrames={62}>
       <AbsoluteFill>
-        <Video
-          src={gifMatch}
-          style={{width: '100%', height: '100%', objectFit: 'cover'}}
-          loop
-        />
+        {gifMatch ? (
+          <Video
+            src={gifMatch}
+            style={{width: '100%', height: '100%', objectFit: 'cover'}}
+            loop
+          />
+        ) : null}
         <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />
 
         <AbsoluteFill style={{opacity}}>

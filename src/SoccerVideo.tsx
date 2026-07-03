@@ -11,7 +11,7 @@ import React from 'react';
 const {fontFamily} = loadFont();
 
 const AUDIO_URL =
-  'https://drive.google.com/uc?export=download&id=1WN1h4626WiqPxz10yXVgRPl5Tu3NObr6';
+  'https://drive.google.com/uc?export=download&id=1L3QTE-ybhxIt8JODSzbWj_rCRrP3D6zF';
 
 export const SoccerVideo: React.FC<VideoProps> = (props) => {
   return (

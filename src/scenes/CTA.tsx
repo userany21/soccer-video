@@ -1,19 +1,29 @@
-import {AbsoluteFill, interpolate, OffthreadVideo, Sequence, staticFile, useCurrentFrame} from 'remotion';
+import {
+  AbsoluteFill,
+  interpolate,
+  OffthreadVideo,
+  Sequence,
+  staticFile,
+  useCurrentFrame,
+} from 'remotion';
 import {VideoProps} from '../types';
 import React from 'react';
-
-const START_FRAME = 222;
+import {CompetitionHeader} from '../shared/CompetitionHeader';
+import {COLORS, FONT, cinematicGradient, glow, bluePillBorder} from '../shared/tokens';
+import {CTA_START, CTA_DURATION} from '../shared/timeline';
 
 export const CTA: React.FC<VideoProps> = ({gifCta, competition}) => {
   const frame = useCurrentFrame();
-  const localFrame = frame - START_FRAME;
+  const localFrame = frame - CTA_START;
   const opacity = interpolate(localFrame, [0, 11], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  // slow scale pulse on the logo lockup
+  const logoPulse = 1 + Math.sin(localFrame / 10) * 0.03;
 
   return (
-    <Sequence from={START_FRAME} durationInFrames={76}>
+    <Sequence from={CTA_START} durationInFrames={CTA_DURATION}>
       <AbsoluteFill>
         {gifCta ? (
           <OffthreadVideo
@@ -21,15 +31,32 @@ export const CTA: React.FC<VideoProps> = ({gifCta, competition}) => {
             style={{width: '100%', height: '100%', objectFit: 'cover'}}
           />
         ) : null}
-        <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />
+        <AbsoluteFill style={cinematicGradient} />
 
         <AbsoluteFill style={{opacity}}>
-          <div style={styles.competition}>{competition}</div>
+          <CompetitionHeader competition={competition} />
+
           <div style={styles.signUp}>sign up</div>
-          <div style={styles.free}>for free</div>
+          <div
+            style={{
+              ...styles.free,
+              transform: `scale(${logoPulse})`,
+              ...glow(COLORS.white, 'sm'),
+            }}
+          >
+            for free
+          </div>
           <div style={styles.now}>RIGHT NOW</div>
-          <div style={styles.link}>whop.com/polybot</div>
-          <div style={styles.linkInBio}>LINK IN BIO</div>
+
+          {/* pill badges */}
+          <div style={styles.pillRow}>
+            <div style={{...styles.pill, ...bluePillBorder}}>FREE ACCESS</div>
+            <div style={styles.pill}>LIVE MARKETS</div>
+          </div>
+
+          <div style={{...styles.link, ...glow(COLORS.primaryGreen, 'sm')}}>whop.com/polybot</div>
+
+          <div style={{...styles.linkInBio, ...glow(COLORS.primaryGreen, 'md')}}>LINK IN BIO</div>
           <div style={styles.startWinning}>START WINNING TODAY</div>
         </AbsoluteFill>
       </AbsoluteFill>
@@ -38,54 +65,62 @@ export const CTA: React.FC<VideoProps> = ({gifCta, competition}) => {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  competition: {
-    position: 'absolute',
-    top: '4.9%',
-    width: '100%',
-    textAlign: 'center',
-    fontFamily: 'Bebas Neue',
-    fontSize: 24,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: 700,
-  },
   signUp: {
     position: 'absolute',
-    top: '11.7%',
+    top: '10%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
+    fontFamily: FONT,
     fontSize: 64,
-    color: '#fff',
+    color: COLORS.white,
     fontWeight: 800,
   },
   free: {
     position: 'absolute',
-    top: '20%',
+    top: '18%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
+    fontFamily: FONT,
     fontSize: 156,
-    color: '#fff',
+    color: COLORS.white,
     fontWeight: 800,
   },
   now: {
     position: 'absolute',
-    top: '28.4%',
+    top: '30%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
+    fontFamily: FONT,
     fontSize: 79,
-    color: 'rgba(0,255,0,1)',
+    color: COLORS.primaryGreen,
     fontWeight: 800,
+  },
+  pillRow: {
+    position: 'absolute',
+    top: '39%',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  pill: {
+    fontFamily: FONT,
+    fontSize: 20,
+    color: COLORS.white,
+    letterSpacing: 2,
+    padding: '10px 22px',
+    borderRadius: 100,
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.16)',
   },
   link: {
     position: 'absolute',
-    top: '36%',
+    top: '46%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
-    fontSize: 92,
-    color: 'rgba(0,255,0,1)',
+    fontFamily: FONT,
+    fontSize: 60,
+    color: COLORS.primaryGreen,
     fontWeight: 800,
   },
   linkInBio: {
@@ -93,9 +128,9 @@ const styles: Record<string, React.CSSProperties> = {
     top: '70.1%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
+    fontFamily: FONT,
     fontSize: 126,
-    color: '#00FF00',
+    color: COLORS.primaryGreen,
     fontWeight: 700,
   },
   startWinning: {
@@ -103,9 +138,9 @@ const styles: Record<string, React.CSSProperties> = {
     top: '78%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
+    fontFamily: FONT,
     fontSize: 56,
-    color: '#fff',
+    color: COLORS.white,
     fontWeight: 700,
   },
 };

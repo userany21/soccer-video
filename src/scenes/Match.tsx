@@ -11,12 +11,13 @@ import {
 } from 'remotion';
 import {VideoProps} from '../types';
 import React from 'react';
-
-const START_FRAME = 47;
+import {CompetitionHeader} from '../shared/CompetitionHeader';
+import {COLORS, FONT, cinematicGradient, glow, bluePillBorder} from '../shared/tokens';
+import {MATCH_START, MATCH_DURATION} from '../shared/timeline';
 
 export const Match: React.FC<VideoProps> = (props) => {
   const frame = useCurrentFrame();
-  const localFrame = frame - START_FRAME;
+  const localFrame = frame - MATCH_START;
   const {fps} = useVideoConfig();
   const {
     homeTeam,
@@ -30,7 +31,7 @@ export const Match: React.FC<VideoProps> = (props) => {
   } = props;
 
   const favTeam = homeWinPct > awayWinPct ? homeTeam : awayTeam;
-  const favPct = Math.max(homeWinPct, awayWinPct).toFixed(1);
+  const favPct = Math.max(homeWinPct, awayWinPct);
 
   const slideIn = spring({
     frame: localFrame,
@@ -41,20 +42,34 @@ export const Match: React.FC<VideoProps> = (props) => {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  const bgScale = interpolate(localFrame, [0, MATCH_DURATION], [1, 1.03], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  // progress bar fills 0 -> favPct over the first ~1s while the header settles
+  const barFill = interpolate(localFrame, [8, 34], [0, favPct], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
-    <Sequence from={START_FRAME} durationInFrames={62}>
+    <Sequence from={MATCH_START} durationInFrames={MATCH_DURATION}>
       <AbsoluteFill>
         {gifMatch ? (
           <OffthreadVideo
             src={staticFile(gifMatch)}
-            style={{width: '100%', height: '100%', objectFit: 'cover'}}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: `scale(${bgScale})`,
+            }}
           />
         ) : null}
-        <AbsoluteFill style={{backgroundColor: 'rgba(0,0,0,0.81)'}} />
+        <AbsoluteFill style={cinematicGradient} />
 
         <AbsoluteFill style={{opacity}}>
-          <div style={styles.competition}>{competition}</div>
+          <CompetitionHeader competition={competition} />
 
           <div
             style={{
@@ -80,12 +95,29 @@ export const Match: React.FC<VideoProps> = (props) => {
             {awayTeam.toUpperCase()}
           </div>
 
-          <Img src={homeLogo} style={styles.homeLogo} />
+          <div style={{...styles.flagBadge, left: '13%'}}>
+            <Img src={homeLogo} style={styles.flagImg} />
+          </div>
           <div style={styles.logoDivider}>X</div>
-          <Img src={awayLogo} style={styles.awayLogo} />
+          <div style={{...styles.flagBadge, right: '13%'}}>
+            <Img src={awayLogo} style={styles.flagImg} />
+          </div>
 
           <div style={styles.favWin}>{favTeam.toUpperCase()} WIN</div>
-          <div style={styles.winPct}>{favPct}%</div>
+          <div style={{...styles.winPct, ...glow(COLORS.white, 'sm')}}>
+            {favPct.toFixed(1)}%
+          </div>
+
+          {/* animated probability bar */}
+          <div style={styles.barTrack}>
+            <div
+              style={{
+                ...styles.barFill,
+                width: `${barFill}%`,
+              }}
+            />
+          </div>
+
           <div style={styles.label}>MARKET PROBABILITY</div>
         </AbsoluteFill>
       </AbsoluteFill>
@@ -94,22 +126,12 @@ export const Match: React.FC<VideoProps> = (props) => {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  competition: {
-    position: 'absolute',
-    top: '4.9%',
-    width: '100%',
-    textAlign: 'center',
-    fontFamily: 'Bebas Neue',
-    fontSize: 24,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: 700,
-  },
   teamName: {
     position: 'absolute',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
-    color: '#fff',
+    fontFamily: FONT,
+    color: COLORS.white,
     fontWeight: 900,
   },
   vs: {
@@ -117,64 +139,83 @@ const styles: Record<string, React.CSSProperties> = {
     top: '21.6%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
+    fontFamily: FONT,
     fontSize: 47,
-    color: '#9cff00',
+    color: COLORS.primaryGreen,
     fontWeight: 900,
   },
-  homeLogo: {
+  flagBadge: {
     position: 'absolute',
-    left: '13%',
-    top: '41%',
+    top: '39%',
     width: '30%',
-    height: '13%',
+    height: '15%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    ...bluePillBorder,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(16,16,16,0.4)',
+  },
+  flagImg: {
+    width: '82%',
+    height: '82%',
     objectFit: 'contain',
+    borderRadius: 8,
   },
   logoDivider: {
     position: 'absolute',
     top: '44%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
+    fontFamily: FONT,
     fontSize: 47,
-    color: '#fff',
+    color: COLORS.white,
     fontWeight: 900,
-  },
-  awayLogo: {
-    position: 'absolute',
-    right: '13%',
-    top: '41%',
-    width: '30%',
-    height: '13%',
-    objectFit: 'contain',
   },
   favWin: {
     position: 'absolute',
-    top: '61.6%',
+    top: '61%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
-    fontSize: 105,
-    color: '#00FF00',
+    fontFamily: FONT,
+    fontSize: 100,
+    color: COLORS.primaryGreen,
     fontWeight: 900,
   },
   winPct: {
     position: 'absolute',
-    top: '71.2%',
+    top: '70%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
-    fontSize: 137,
-    color: '#fff',
+    fontFamily: FONT,
+    fontSize: 130,
+    color: COLORS.white,
     fontWeight: 900,
+  },
+  barTrack: {
+    position: 'absolute',
+    top: '81.5%',
+    left: '15%',
+    width: '70%',
+    height: 14,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: 8,
+    background: `linear-gradient(90deg, ${COLORS.polybotBlue}, ${COLORS.primaryGreen})`,
+    boxShadow: `0 0 14px rgba(0,255,102,0.6)`,
   },
   label: {
     position: 'absolute',
-    top: '79.3%',
+    top: '85%',
     width: '100%',
     textAlign: 'center',
-    fontFamily: 'Bebas Neue',
-    fontSize: 54,
+    fontFamily: FONT,
+    fontSize: 40,
     color: 'rgba(255,255,255,0.6)',
     fontWeight: 600,
     letterSpacing: '8px',

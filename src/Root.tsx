@@ -1,5 +1,6 @@
 import {Composition} from 'remotion';
 import {SoccerVideo} from './SoccerVideo';
+import {TOTAL_DURATION, FPS} from './shared/timeline';
 import {VideoProps} from './types';
 import React from 'react';
 
@@ -43,8 +44,8 @@ export const RemotionRoot = () => {
     <Composition
       id="SoccerVideo"
       component={SoccerVideo as React.FC}
-      durationInFrames={298}
-      fps={30}
+      durationInFrames={TOTAL_DURATION}
+      fps={FPS}
       width={1080}
       height={1920}
       defaultProps={defaultProps}

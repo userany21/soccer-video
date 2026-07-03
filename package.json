@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "remotion studio",
-    "build": "remotion render SoccerVideo out/video.mp4"
+    "build": "remotion render SoccerVideo out/video.mp4 --codec=h264 --crf=12 --image-format=png --pixel-format=yuv420p --x264-preset=slow"
   },
   "keywords": [],
   "author": "",

@@ -95,9 +95,14 @@ app.post('/render', async (req, res) => {
       'SoccerVideo',
       outPath,
       `--props=${propsPath}`,
+      '--codec=h264',
+      '--crf=12',
+      '--image-format=png',
+      '--pixel-format=yuv420p',
+      '--x264-preset=slow',
       '--concurrency=1',
       '--timeout=30000',
-    ], { cwd: __dirname, timeout: 600000 });
+    ], { cwd: __dirname, timeout: 1200000 });
     console.log(`[${id}] Render finished in ${Date.now() - renderStart}ms`);
 
     res.download(outPath, `video-${id}.mp4`, () => {

@@ -45,8 +45,8 @@ export const RemotionRoot = () => {
       component={SoccerVideo as React.FC}
       durationInFrames={298}
       fps={30}
-      width={720}
-      height={1280}
+      width={1080}
+      height={1920}
       defaultProps={defaultProps}
     />
   );

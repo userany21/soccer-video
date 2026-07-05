@@ -12,7 +12,7 @@ import React from 'react';
 const {fontFamily} = loadFont();
 
 const AUDIO_URL =
-  'https://drive.google.com/uc?export=download&id=1L3QTE-ybhxIt8JODSzbWj_rCRrP3D6zF';
+  'https://drive.google.com/uc?export=download&id=1lT-yyCKyHz0Vinv9y5t7OUnx1sNs7Vmz';
 
 export const SoccerVideo: React.FC<VideoProps> = (props) => {
   return (

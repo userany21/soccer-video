@@ -2,7 +2,6 @@ import {
   AbsoluteFill,
   interpolate,
   OffthreadVideo,
-  Sequence,
   staticFile,
   useCurrentFrame,
 } from 'remotion';
@@ -10,57 +9,53 @@ import {VideoProps} from '../types';
 import React from 'react';
 import {CompetitionHeader} from '../shared/CompetitionHeader';
 import {COLORS, FONT, cinematicGradient, glow, bluePillBorder} from '../shared/tokens';
-import {CTA_START, CTA_DURATION} from '../shared/timeline';
 
 export const CTA: React.FC<VideoProps> = ({gifCta, competition}) => {
   const frame = useCurrentFrame();
-  const localFrame = frame - CTA_START;
-  const opacity = interpolate(localFrame, [0, 11], [0, 1], {
+  const opacity = interpolate(frame, [0, 11], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
   // slow scale pulse on the logo lockup
-  const logoPulse = 1 + Math.sin(localFrame / 10) * 0.03;
+  const logoPulse = 1 + Math.sin(frame / 10) * 0.03;
 
   return (
-    <Sequence from={CTA_START} durationInFrames={CTA_DURATION}>
-      <AbsoluteFill>
-        {gifCta ? (
-          <OffthreadVideo
-            src={staticFile(gifCta)}
-            style={{width: '100%', height: '100%', objectFit: 'cover'}}
-          />
-        ) : null}
-        <AbsoluteFill style={cinematicGradient} />
+    <AbsoluteFill>
+      {gifCta ? (
+        <OffthreadVideo
+          src={staticFile(gifCta)}
+          style={{width: '100%', height: '100%', objectFit: 'cover'}}
+        />
+      ) : null}
+      <AbsoluteFill style={cinematicGradient} />
 
-        <AbsoluteFill style={{opacity}}>
-          <CompetitionHeader competition={competition} />
+      <AbsoluteFill style={{opacity}}>
+        <CompetitionHeader competition={competition} />
 
-          <div style={styles.signUp}>sign up</div>
-          <div
-            style={{
-              ...styles.free,
-              transform: `scale(${logoPulse})`,
-              ...glow(COLORS.white, 'sm'),
-            }}
-          >
-            for free
-          </div>
-          <div style={styles.now}>RIGHT NOW</div>
+        <div style={styles.signUp}>sign up</div>
+        <div
+          style={{
+            ...styles.free,
+            transform: `scale(${logoPulse})`,
+            ...glow(COLORS.white, 'sm'),
+          }}
+        >
+          for free
+        </div>
+        <div style={styles.now}>RIGHT NOW</div>
 
-          {/* pill badges */}
-          <div style={styles.pillRow}>
-            <div style={{...styles.pill, ...bluePillBorder}}>FREE ACCESS</div>
-            <div style={styles.pill}>LIVE MARKETS</div>
-          </div>
+        {/* pill badges */}
+        <div style={styles.pillRow}>
+          <div style={{...styles.pill, ...bluePillBorder}}>FREE ACCESS</div>
+          <div style={styles.pill}>LIVE MARKETS</div>
+        </div>
 
-          <div style={{...styles.link, ...glow(COLORS.primaryGreen, 'sm')}}>whop.com/polybot</div>
+        <div style={{...styles.link, ...glow(COLORS.primaryGreen, 'sm')}}>whop.com/polybot</div>
 
-          <div style={{...styles.linkInBio, ...glow(COLORS.primaryGreen, 'md')}}>LINK IN BIO</div>
-          <div style={styles.startWinning}>START WINNING TODAY</div>
-        </AbsoluteFill>
+        <div style={{...styles.linkInBio, ...glow(COLORS.primaryGreen, 'md')}}>LINK IN BIO</div>
+        <div style={styles.startWinning}>START WINNING TODAY</div>
       </AbsoluteFill>
-    </Sequence>
+    </AbsoluteFill>
   );
 };
 

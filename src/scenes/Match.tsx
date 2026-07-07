@@ -2,7 +2,6 @@ import {
   AbsoluteFill,
   Img,
   interpolate,
-  Sequence,
   spring,
   staticFile,
   useCurrentFrame,
@@ -13,11 +12,10 @@ import {VideoProps} from '../types';
 import React from 'react';
 import {CompetitionHeader} from '../shared/CompetitionHeader';
 import {COLORS, FONT, cinematicGradient, glow, bluePillBorder} from '../shared/tokens';
-import {MATCH_START, MATCH_DURATION} from '../shared/timeline';
+import {MATCH_DURATION} from '../shared/timeline';
 
 export const Match: React.FC<VideoProps> = (props) => {
   const frame = useCurrentFrame();
-  const localFrame = frame - MATCH_START;
   const {fps} = useVideoConfig();
   const {
     homeTeam,
@@ -34,94 +32,92 @@ export const Match: React.FC<VideoProps> = (props) => {
   const favPct = Math.max(homeWinPct, awayWinPct);
 
   const slideIn = spring({
-    frame: localFrame,
+    frame,
     fps,
     config: {damping: 20, stiffness: 180},
   });
-  const opacity = interpolate(localFrame, [0, 10], [0, 1], {
+  const opacity = interpolate(frame, [0, 10], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const bgScale = interpolate(localFrame, [0, MATCH_DURATION], [1, 1.03], {
+  const bgScale = interpolate(frame, [0, MATCH_DURATION], [1, 1.03], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
   // progress bar fills 0 -> favPct over the first ~1s while the header settles
-  const barFill = interpolate(localFrame, [8, 34], [0, favPct], {
+  const barFill = interpolate(frame, [8, 34], [0, favPct], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   return (
-    <Sequence from={MATCH_START} durationInFrames={MATCH_DURATION}>
-      <AbsoluteFill>
-        {gifMatch ? (
-          <OffthreadVideo
-            src={staticFile(gifMatch)}
+    <AbsoluteFill>
+      {gifMatch ? (
+        <OffthreadVideo
+          src={staticFile(gifMatch)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transform: `scale(${bgScale})`,
+          }}
+        />
+      ) : null}
+      <AbsoluteFill style={cinematicGradient} />
+
+      <AbsoluteFill style={{opacity}}>
+        <CompetitionHeader competition={competition} />
+
+        <div
+          style={{
+            ...styles.teamName,
+            top: '13%',
+            fontSize: 99,
+            transform: `translateX(${interpolate(slideIn, [0, 1], [200, 0])}px)`,
+          }}
+        >
+          {homeTeam.toUpperCase()}
+        </div>
+
+        <div style={styles.vs}>VS</div>
+
+        <div
+          style={{
+            ...styles.teamName,
+            top: '25.5%',
+            fontSize: 93,
+            transform: `translateX(${interpolate(slideIn, [0, 1], [-200, 0])}px)`,
+          }}
+        >
+          {awayTeam.toUpperCase()}
+        </div>
+
+        <div style={{...styles.flagBadge, left: '13%'}}>
+          <Img src={homeLogo} style={styles.flagImg} />
+        </div>
+        <div style={styles.logoDivider}>X</div>
+        <div style={{...styles.flagBadge, right: '13%'}}>
+          <Img src={awayLogo} style={styles.flagImg} />
+        </div>
+
+        <div style={styles.favWin}>{favTeam.toUpperCase()} WIN</div>
+        <div style={{...styles.winPct, ...glow(COLORS.white, 'sm')}}>
+          {favPct.toFixed(1)}%
+        </div>
+
+        {/* animated probability bar */}
+        <div style={styles.barTrack}>
+          <div
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transform: `scale(${bgScale})`,
+              ...styles.barFill,
+              width: `${barFill}%`,
             }}
           />
-        ) : null}
-        <AbsoluteFill style={cinematicGradient} />
+        </div>
 
-        <AbsoluteFill style={{opacity}}>
-          <CompetitionHeader competition={competition} />
-
-          <div
-            style={{
-              ...styles.teamName,
-              top: '13%',
-              fontSize: 99,
-              transform: `translateX(${interpolate(slideIn, [0, 1], [200, 0])}px)`,
-            }}
-          >
-            {homeTeam.toUpperCase()}
-          </div>
-
-          <div style={styles.vs}>VS</div>
-
-          <div
-            style={{
-              ...styles.teamName,
-              top: '25.5%',
-              fontSize: 93,
-              transform: `translateX(${interpolate(slideIn, [0, 1], [-200, 0])}px)`,
-            }}
-          >
-            {awayTeam.toUpperCase()}
-          </div>
-
-          <div style={{...styles.flagBadge, left: '13%'}}>
-            <Img src={homeLogo} style={styles.flagImg} />
-          </div>
-          <div style={styles.logoDivider}>X</div>
-          <div style={{...styles.flagBadge, right: '13%'}}>
-            <Img src={awayLogo} style={styles.flagImg} />
-          </div>
-
-          <div style={styles.favWin}>{favTeam.toUpperCase()} WIN</div>
-          <div style={{...styles.winPct, ...glow(COLORS.white, 'sm')}}>
-            {favPct.toFixed(1)}%
-          </div>
-
-          {/* animated probability bar */}
-          <div style={styles.barTrack}>
-            <div
-              style={{
-                ...styles.barFill,
-                width: `${barFill}%`,
-              }}
-            />
-          </div>
-
-          <div style={styles.label}>MARKET PROBABILITY</div>
-        </AbsoluteFill>
+        <div style={styles.label}>MARKET PROBABILITY</div>
       </AbsoluteFill>
-    </Sequence>
+    </AbsoluteFill>
   );
 };
 

@@ -10,6 +10,32 @@ const http = require('http');
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
+function formatPst(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3,
+    hour12: false,
+    timeZoneName: 'short',
+  }).formatToParts(date);
+
+  const get = (type) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}.${get('fractionalSecond') || '000'} ${get('timeZoneName')}`;
+}
+
+function log(...args) {
+  console.log(`[${formatPst()}]`, ...args);
+}
+
+function logError(...args) {
+  console.error(`[${formatPst()}]`, ...args);
+}
+
 async function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
@@ -53,8 +79,8 @@ app.post('/render', async (req, res) => {
   const jobStart = Date.now();
   const data = req.body;
   const id = Date.now();
-  console.log(`[${id}] === NEW RENDER REQUEST ===`);
-  console.log(`[${id}] BODY RECEIVED:`, JSON.stringify(data).slice(0, 300));
+  log('=== NEW RENDER REQUEST ===');
+  log('BODY RECEIVED:', JSON.stringify(data).slice(0, 300));
 
   const propsPath = path.join(__dirname, `props-${id}.json`);
   const outPath = path.join(__dirname, `out/video-${id}.mp4`);
@@ -70,25 +96,25 @@ app.post('/render', async (req, res) => {
         const filename = `${key}.mp4`;
         const localPath = path.join(gifDir, filename);
         const dlStart = Date.now();
-        console.log(`[${id}] Downloading ${key} from ${data[key]}`);
+        log(`Downloading ${key} from ${data[key]}`);
         await downloadFile(data[key], localPath);
         const size = fs.existsSync(localPath) ? fs.statSync(localPath).size : 0;
-        console.log(`[${id}] Downloaded ${key} in ${Date.now() - dlStart}ms, ${size} bytes`);
+        log(`Downloaded ${key} in ${Date.now() - dlStart}ms, ${size} bytes`);
 
         const remuxStart = Date.now();
         await faststartRemux(localPath);
-        console.log(`[${id}] Remuxed ${key} (faststart) in ${Date.now() - remuxStart}ms`);
+        log(`Remuxed ${key} (faststart) in ${Date.now() - remuxStart}ms`);
 
         data[key] = `tmp-gifs/${id}/${filename}`;
       }
     }
-    console.log(`[${id}] All GIFs downloaded. Total download time: ${Date.now() - jobStart}ms`);
+    log(`All GIFs downloaded. Total download time: ${Date.now() - jobStart}ms`);
 
     fs.writeFileSync(propsPath, JSON.stringify(data));
-    console.log(`[${id}] Props written to ${propsPath}`);
+    log(`Props written to ${propsPath}`);
 
     const renderStart = Date.now();
-    console.log(`[${id}] Starting Remotion render...`);
+    log('Starting Remotion render...');
     await execFileAsync('npx', [
       'remotion', 'render',
       'src/index.ts',
@@ -103,17 +129,17 @@ app.post('/render', async (req, res) => {
       '--concurrency=1',
       '--timeout=30000',
     ], { cwd: __dirname, timeout: 1200000 });
-    console.log(`[${id}] Render finished in ${Date.now() - renderStart}ms`);
+    log(`Render finished in ${Date.now() - renderStart}ms`);
 
     res.download(outPath, `video-${id}.mp4`, () => {
-      console.log(`[${id}] File sent to n8n, cleaning up. Total job time: ${Date.now() - jobStart}ms`);
+      log(`File sent to n8n, cleaning up. Total job time: ${Date.now() - jobStart}ms`);
       fs.unlinkSync(outPath);
       fs.unlinkSync(propsPath);
       fs.rmSync(gifDir, { recursive: true });
-      console.log(`[${id}] === DONE ===`);
+      log('=== DONE ===');
     });
   } catch (err) {
-    console.error(`[${id}] FAILED after ${Date.now() - jobStart}ms:`, err.message);
+    logError(`FAILED after ${Date.now() - jobStart}ms:`, err.message);
     if (fs.existsSync(propsPath)) fs.unlinkSync(propsPath);
     if (fs.existsSync(gifDir)) fs.rmSync(gifDir, { recursive: true });
     res.status(500).json({ error: err.message });
@@ -121,7 +147,7 @@ app.post('/render', async (req, res) => {
 });
 
 const server = app.listen(3001, '0.0.0.0', () => {
-  console.log('Render server on http://0.0.0.0:3001');
+  log('Render server on http://0.0.0.0:3001');
 });
 server.on('error', (err) => {
   console.error('Server error:', err);
